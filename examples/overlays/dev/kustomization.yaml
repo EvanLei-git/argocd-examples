@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1
+kind: Kustomization
+
+
+resources:
+  - ../../base
+
+images:
+  - name: nginx:bookworm-otel
+    newTag: "v1.0.0" #test
+
+
+# Sets the namespace for all generated resources (probably need to change this)
+namespace: postgres
+
+helmCharts:
+  - name: postgresql
+    repo: https://charts.bitnami.com/bitnami
+    version: 15.5.38
+    releaseName: postgres-bitnami
+    namespace: postgres
+    # Same values 
+    valuesInline: 
+      auth:
+        postgresPassword: mysecurepassword
+        username: myuser
+        password: myuserpassword
+        database: mydatabase
+      primary:
+        persistence:
+          enabled: true
+          size: 8Gi
