@@ -1,24 +1,47 @@
-apiVersion: kustomize.config.k8s.io/v1
+apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 
 resources:
   - ../../base
+  - namespace.yaml
 
-images:
-  - name: nginx:bookworm-otel
-    newTag: "v1.0.0" #test
-
+namePrefix: dev-
 
 # Sets the namespace for all generated resources (probably need to change this)
-namespace: postgres
+namespace: dev-env
+
+
+# SEPARATE NAMESPACES
+# patches:
+#   # 1. Patch the Postgres resources
+#   - target:
+#       kind: Application # or StatefulSet, depending on your postgres.yaml
+#       name: postgres-bitnami
+#     patch: |-
+#       - op: replace
+#         path: /metadata/namespace
+#         value: dev-database
+
+#   # 2. Patch the Nginx resources
+#   - target:
+#       labelSelector: app=nginx # Targets both the Deployment and the Service if they have this label
+#     patch: |-
+#       - op: replace
+#         path: /metadata/namespace
+#         value: dev-frontend
+
+
+
+images:
+  - name: nginx        # Match ONLY the name part of the image wihtout the bookworm-otel
+    newTag: "stable-bookworm-otel"   # This will replace "bookworm-otel" with "v1.0.0"
 
 helmCharts:
   - name: postgresql
     repo: https://charts.bitnami.com/bitnami
-    version: 15.5.38
+    version: 18.5.18
     releaseName: postgres-bitnami
-    namespace: postgres
     # Same values 
     valuesInline: 
       auth:

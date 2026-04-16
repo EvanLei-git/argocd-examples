@@ -2,7 +2,6 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: postgres-bitnami
-  namespace: argocd # replace with your Argo CD namespace if different
 spec:
   project: default
   source:
@@ -22,7 +21,6 @@ spec:
             size: 8Gi
   destination:
     server: https://kubernetes.default.svc
-    namespace: postgres
   syncPolicy:
     automated:
       prune: true
