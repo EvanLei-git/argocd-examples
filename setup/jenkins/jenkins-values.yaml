@@ -1,0 +1,14 @@
+controller:
+
+
+  admin:
+    createSecret: true
+    username: "admin"
+    password: "supersecretpassword"
+
+  servicePort: 8080
+  serviceType: NodePort
+
+  persistence:
+    enabled: true
+    size: "5Gi"
