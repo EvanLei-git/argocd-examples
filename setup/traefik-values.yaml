@@ -1,0 +1,16 @@
+# For https:
+# ports:
+#   web:
+#     http:
+#       redirections:
+#         entryPoint:
+#           to: websecure
+#           scheme: https
+#           permanent: true
+
+
+# For simple http just keep this:
+ports:
+  web:
+    http:
+      redirections: null

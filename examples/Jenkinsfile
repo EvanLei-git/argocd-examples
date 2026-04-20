@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+    
+    environment {
+        // Your Docker and Git credentials
+        DOCKER_REGISTRY = "your-dockerhub-username"
+        IMAGE_NAME = "nginx"
+        IMAGE_TAG = "stable-${env.BUILD_ID}" 
+        GIT_CREDS_ID = "github-credentials"
+        REPO_URL = "https://github.com/EvanLei-git/argocd-examples.git"
+    }
+
+    stages {
+        stage('Build & Push Docker Image') {
+            steps {
+                sh "docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ."
+                sh "docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+            }
+        }
+        
+        stage('Update GitOps Repo') {
+            steps {
+                // Clone the kustomize branch
+                git branch: 'kustomize', credentialsId: "${GIT_CREDS_ID}", url: "${REPO_URL}"
+                
+                dir('examples/overlays/dev') {
+                    // Update the image tag in kustomization.yaml
+                    sh "kustomize edit set image nginx=${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+                }
+            }
+        }
+        
+        stage('Commit to Trigger ArgoCD') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${GIT_CREDS_ID}", usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                    sh """
+                        git config user.name "Jenkins CI"
+                        git config user.email "ci@jenkins.local"
+                        git add examples/overlays/dev/kustomization.yaml
+                        git commit -m "ci: update dev nginx image to ${IMAGE_TAG}"
+                        git push https://${GIT_USER}:${GIT_PASS}@github.com/EvanLei-git/argocd-examples.git HEAD:kustomize
+                    """
+                }
+            }
+        }
+    }
+}

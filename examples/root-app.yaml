@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-dev-cluster
+  # This MUST be the namespace where ArgoCD is installed (e.g., default or argocd)
+  namespace: default 
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/EvanLei-git/argocd-examples.git'
+    targetRevision: kustomize
+    path: examples/overlays/dev
+  destination:
+    server: 'https://kubernetes.default.svc'
+    # The Root app deploys into the ArgoCD namespace so ArgoCD can read the child postgres.yaml
+    namespace: default 
+  # Here is your required Sync Policy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
