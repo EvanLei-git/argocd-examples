@@ -9,6 +9,10 @@ pipeline {
         REPO_URL = "https://github.com/EvanLei-git/argocd-examples.git"
     }
 
+    triggers {
+        pollSCM('* * * * *')
+    }
+    
     stages {
         stage('Setup Tools') {
             steps {
