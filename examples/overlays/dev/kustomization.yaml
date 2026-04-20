@@ -26,4 +26,4 @@ patches:
 images:
 - name: nginx
   newName: nginx
-  newTag: 1.26.0
+  newTag: 1.67.0
