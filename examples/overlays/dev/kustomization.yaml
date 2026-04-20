@@ -3,8 +3,8 @@ kind: Kustomization
 
 
 resources:
-  - ../../base
-  - namespace.yaml
+- ../../base
+- namespace.yaml
 
 namePrefix: dev-
 
@@ -14,32 +14,16 @@ namespace: dev-env
 
 # SEPARATE NAMESPACES
 patches:
-  - target:
-      kind: Application
-      name: postgres-bitnami
-    patch: |-
-      - op: replace
-        path: /spec/destination/namespace
-        value: dev-env
+- patch: |-
+    - op: replace
+      path: /spec/destination/namespace
+      value: dev-env
+  target:
+    kind: Application
+    name: postgres-bitnami
 
 
 images:
-  - name: nginx        # Match ONLY the name part of the image wihtout the bookworm-otel
-    newTag: "stable-bookworm-otel"   # This will replace "bookworm-otel" with "v1.0.0"
-
-# helmCharts:
-#   - name: postgresql
-#     repo: https://charts.bitnami.com/bitnami
-#     version: 18.5.18
-#     releaseName: postgres-bitnami
-#     # Same values 
-#     valuesInline: 
-#       auth:
-#         postgresPassword: mysecurepassword
-#         username: myuser
-#         password: myuserpassword
-#         database: mydatabase
-#       primary:
-#         persistence:
-#           enabled: true
-#           size: 8Gi
+- name: nginx
+  newName: nginx
+  newTag: 1.26.0
