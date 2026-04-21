@@ -3,7 +3,7 @@ kind: Application
 metadata:
   name: root-dev-cluster
   # This MUST be the namespace where ArgoCD is installed (e.g., default or argocd)
-  namespace: default 
+  namespace: argocd 
 spec:
   project: default
   source:
@@ -13,7 +13,7 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     # The Root app deploys into the ArgoCD namespace so ArgoCD can read the child postgres.yaml
-    namespace: default 
+    namespace: argocd 
   # Here is your required Sync Policy
   syncPolicy:
     automated:

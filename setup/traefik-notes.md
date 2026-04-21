@@ -2,7 +2,7 @@ helm repo add traefik https://helm.traefik.io/traefik
 helm repo update
 
 
-helm install traefik traefik/traefik --namespace traefik --values values.yaml
+helm install traefik traefik/traefik --namespace traefik --create-namespace --values values.yaml
 
 helm upgrade traefik traefik/traefik -n traefik -f traefik-values.yaml 
 

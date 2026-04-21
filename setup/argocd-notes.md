@@ -1,4 +1,4 @@
- helm upgrade my-argocd argo/argo-cd -f argocd-values.yaml
+ helm upgrade my-argocd argo/argo-cd -f argocd-values.yaml --namespace argocd --create-namespace
 
 
 
