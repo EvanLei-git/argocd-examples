@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        IMAGE_NAME = "example-nginx"
+        IMAGE_NAME = "nginx"
         IMAGE_TAG = "1.29.8" 
         
         GIT_CREDS_ID = "git-token"
