@@ -3,7 +3,7 @@ pipeline {
     
     environment {
         IMAGE_NAME = "example-nginx"
-        IMAGE_TAG = "1.67.0" 
+        IMAGE_TAG = "1.29.8" 
         
         GIT_CREDS_ID = "git-token"
         REPO_URL = "https://github.com/EvanLei-git/argocd-examples.git"
