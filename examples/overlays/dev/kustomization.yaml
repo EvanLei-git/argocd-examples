@@ -15,12 +15,12 @@ namePrefix: dev-
 patches:
 # Patch NGINX Deployment and Service to go to dev-env
 - patch: |-
-    - op: add
+    - op: replace
       path: /metadata/namespace
       value: dev-env
   target:
     kind: Deployment|Service
-    name: nginx
+    name: "nginx-.*"
 
 # Patch Postgres Application destination to dev-env, but keep the Application itself in argocd
 - patch: |-
