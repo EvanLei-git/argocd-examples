@@ -30,7 +30,7 @@ spec:
             - |
 
               echo -n "Checking ${SERVICE_NAME} in namespace ${NAMESPACE}: "
-              curl -k -s -o /dev/null -w "%{http_code}" http://${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local | grep -qE "200|302" && echo "OK" || echo "FAILED"
+              wget -T 5 -q --spider http://${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local && echo "OK" || echo "FAILED"
 
 
           restartPolicy: OnFailure

@@ -37,13 +37,21 @@ patches:
   target:
     kind: Application
     name: postgres-bitnami
+#The JSON Patch
+- patch: |-
+    - op: add
+      path: /metadata/namespace
+      value: dev-env
+  target:
+    kind: CronJob
+    name: health-check-5-minutes
 
+# Merge Patch 
 - patch: |-
     apiVersion: batch/v1
     kind: CronJob
     metadata:
       name: health-check-5-minutes
-      namespace: dev-env
     spec:
       jobTemplate:
         spec:
