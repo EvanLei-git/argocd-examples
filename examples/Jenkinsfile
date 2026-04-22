@@ -1,46 +1,41 @@
 pipeline {
     agent any
     
+    triggers {
+        // Trigger Jenkins via GitHub webhook push
+        githubPush()
+    }
+
     environment {
-        IMAGE_NAME = "nginx"
-        IMAGE_TAG = "1.29.8" 
-        
-        GIT_CREDS_ID = "git-token"
+        // Adjust these as needed for your project
         REPO_URL = "https://github.com/EvanLei-git/argocd-examples.git"
     }
 
     stages {
         stage('Setup Tools') {
             steps {
-                
+                // Install kustomize to validate the manifests
                 sh 'curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash'
             }
         }
         
-        stage('Update GitOps Repo') {
+        stage('Check Build (CI)') {
             steps {
-                git branch: 'kustomize', credentialsId: "${GIT_CREDS_ID}", url: "${REPO_URL}"
-                
-                dir('examples/overlays/dev') {
-                    sh "${WORKSPACE}/kustomize edit set image ${IMAGE_NAME}=${IMAGE_NAME}:${IMAGE_TAG}"
-                }
+                echo 'Running CI tests: Validating Kubernetes manifests...'
+                // Check if the base and overlays can build successfully without errors
+                sh './kustomize build examples/base > /dev/null'
+                sh './kustomize build examples/overlays/dev > /dev/null'
+                echo 'Build check passed successfully!'
             }
         }
-        stage('Commit to Trigger ArgoCD') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: "${GIT_CREDS_ID}", usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-                    // Notice the single quotes below!
-                    sh '''
-                        git config user.name "Jenkins CI"
-                        git config user.email "ci@jenkins.local"
-                        git add examples/overlays/dev/kustomization.yaml
-                        git commit -m "ci: update dev nginx image to ${IMAGE_TAG}"
-                        
-                        # Push back to GitHub
-                        git push https://${GIT_USER}:${GIT_PASS}@github.com/EvanLei-git/argocd-examples.git HEAD:kustomize
-                    '''
-                }
-            }
+    }
+    
+    post {
+        success {
+            echo 'CI Pipeline Succeeded. ArgoCD will now detect the changes and test/sync the deployment automatically.'
+        }
+        failure {
+            echo 'CI Pipeline Failed. Please fix the manifest errors before ArgoCD deploys them.'
         }
     }
 }
