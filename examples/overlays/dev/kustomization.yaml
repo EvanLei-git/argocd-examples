@@ -8,23 +8,21 @@ resources:
 
 namePrefix: dev-
 
-# Sets the namespace for all generated resources (probably need to change this)
-namespace: dev-env
-
-
-
-# SEPARATE NAMESPACES
-
-# 1. The argocd Namespace gets:
-# The postgres-bitnami Application object (the instruction ticket).
-
-# 2. The dev-env Namespace gets EVERYTHING else:
-# The actual PostgreSQL database pods
-# The PostgreSQL services and volume claims
-# The NGINX deployment and pods
-# The NGINX service
+# We CANNOT use the global `namespace: dev-env` because Kustomize applies it AFTER patches,
+# which breaks the postgres Application object by forcing it out of the argocd namespace.
+# Instead, we manually patch the NGINX components to go to dev-env.
 
 patches:
+# Patch NGINX Deployment and Service to go to dev-env
+- patch: |-
+    - op: add
+      path: /metadata/namespace
+      value: dev-env
+  target:
+    kind: Deployment|Service
+    name: nginx
+
+# Patch Postgres Application destination to dev-env, but keep the Application itself in argocd
 - patch: |-
     - op: replace
       path: /spec/destination/namespace
@@ -35,7 +33,6 @@ patches:
   target:
     kind: Application
     name: postgres-bitnami
-
 
 images:
 - name: nginx
