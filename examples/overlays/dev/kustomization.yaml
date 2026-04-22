@@ -14,11 +14,24 @@ namespace: dev-env
 
 
 # SEPARATE NAMESPACES
+
+# 1. The argocd Namespace gets:
+# The postgres-bitnami Application object (the instruction ticket).
+
+# 2. The dev-env Namespace gets EVERYTHING else:
+# The actual PostgreSQL database pods
+# The PostgreSQL services and volume claims
+# The NGINX deployment and pods
+# The NGINX service
+
 patches:
 - patch: |-
     - op: replace
       path: /spec/destination/namespace
       value: dev-env
+    - op: replace
+      path: /metadata/namespace
+      value: argocd
   target:
     kind: Application
     name: postgres-bitnami
