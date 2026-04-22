@@ -23,6 +23,7 @@ patches:
     name: "nginx-.*"
 
 # Patch Postgres Application destination to dev-env, but keep the Application itself in argocd
+# We also control the PostgreSQL Helm chart version right here in the overlay!
 - patch: |-
     - op: replace
       path: /spec/destination/namespace
@@ -30,6 +31,9 @@ patches:
     - op: replace
       path: /metadata/namespace
       value: argocd
+    - op: replace
+      path: /spec/source/targetRevision
+      value: 18.5.24
   target:
     kind: Application
     name: postgres-bitnami
@@ -37,4 +41,4 @@ patches:
 images:
 - name: nginx
   newName: nginx
-  newTag: 1.29.8
+  newTag: 1.30.0
