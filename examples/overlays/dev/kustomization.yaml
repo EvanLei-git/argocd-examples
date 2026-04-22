@@ -12,6 +12,7 @@ namePrefix: dev-
 namespace: dev-env
 
 
+
 # SEPARATE NAMESPACES
 patches:
 - patch: |-
