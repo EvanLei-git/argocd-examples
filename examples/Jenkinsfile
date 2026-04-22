@@ -31,10 +31,6 @@ pipeline {
         }
         
         stage('Promote to CD (Merge)') {
-            when {
-                // ONLY run this merge step if we are on the dev-build branch
-                branch 'dev-build'
-            }
             steps {
                 echo 'CI passed! Merging dev-build into kustomize branch for ArgoCD to deploy...'
                 withCredentials([usernamePassword(credentialsId: "${GIT_CREDS_ID}", usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
