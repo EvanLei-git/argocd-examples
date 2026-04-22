@@ -1,6 +1,10 @@
 pipeline {
     agent any
-    
+
+    triggers {
+        // Poll GitHub every 1 minute (since we don't have a public IP for webhooks)
+        pollSCM('* * * * *')
+    }
 
     environment {
         // Adjust these as needed for your project
