@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: CronJob
+
+
+metadata:
+  labels:
+    chart: cronjobs-0.1.0
+  name: health-check-5-minutes
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: health-check-5-minutes
+            image: busybox:1.28
+            imagePullPolicy: IfNotPresent
+            env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: SERVICE_NAME
+              value: nginx-nodeport
+            command:
+            - /bin/sh
+            - -c
+            - |
+
+              echo -n "Checking ${SERVICE_NAME} in namespace ${NAMESPACE}: "
+              curl -k -s -o /dev/null -w "%{http_code}" http://${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local | grep -qE "200|302" && echo "OK" || echo "FAILED"
+
+
+          restartPolicy: OnFailure
+        

@@ -3,6 +3,7 @@ kind: Kustomization
 
 
 resources:
+  - cron-job.yaml
   - nginx/nginx-deployment.yaml
   - nginx/nginx-svc.yaml
   - postgres/postgres.yaml
