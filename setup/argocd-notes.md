@@ -10,14 +10,13 @@ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 
 # Before you run the Helm command though, know what tool you are using to run your local Kubernetes cluster (e.g., Docker Desktop, Minikube, Kind, k3d, or Rancher Desktop).
-helm install ingress-nginx ingress-nginx/ingress-nginx \
-  --namespace ingress-nginx --create-namespace
+helm install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace
 
 # 2. Install/Upgrade Traefik (if using Traefik as an alternative Ingress)
 helm upgrade traefik traefik/traefik --namespace traefik --create-namespace
 
 # 3. Install/Upgrade ArgoCD
-helm upgrade my-argocd argo/argo-cd -f argocd-values.yaml --namespace argocd --create-namespace
+helm upgrade argocd argo/argo-cd -f argocd-values.yaml --namespace argocd --create-namespace
 ```
 
 ## Debugging Information & Notes

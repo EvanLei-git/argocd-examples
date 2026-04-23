@@ -21,7 +21,6 @@ controller:
   replicas: 1
 
 server:
-  url: "http://argocd.localhost:8080"
   # Changed to ClusterIP because Ingress will handle the outside traffic
   service:
     type: ClusterIP 
@@ -32,25 +31,25 @@ server:
     
   ingress:
     enabled: true
-    ingressClassName: traefik
-    #ingressClassName: nginx
+    ingressClassName: nginx
+    # ingressClassName: traefik
     https: false
     annotations:
-      #nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-      #nginx.ingress.kubernetes.io/backend-protocol: "HTTPS" # Better than passthrough for Argo
+      # NGINX Configuration (Default)
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS" # Better than passthrough for Argo
      
+      # TRAEFIK Configuration (Uncomment if using Traefik and comment Nginx above)
       # For https:
       # traefik.ingress.kubernetes.io/router.entrypoints: websecure
       # traefik.ingress.kubernetes.io/router.tls: "true"
       # # Tell Traefik to speak HTTP/2 Cleartext to Argo CD
       # traefik.ingress.kubernetes.io/service.serversscheme: h2c
 
-      #for simple http just keep this
-      traefik.ingress.kubernetes.io/router.entrypoints: web
-      traefik.ingress.kubernetes.io/service.serversscheme: h2c
+      # For simple http:
+      # traefik.ingress.kubernetes.io/router.entrypoints: web
+      # traefik.ingress.kubernetes.io/service.serversscheme: h2c
 
-      
-    hostname: argocd.localhost
     # tls:
     #   - hostname:
     #       - argocd.localhost

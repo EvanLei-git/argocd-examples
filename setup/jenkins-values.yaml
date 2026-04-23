@@ -1,0 +1,57 @@
+controller:
+
+  admin:
+    createSecret: true
+    username: "admin"
+    password: "supersecretpassword"
+
+
+
+  # 1. Enable JCasC with a default configuration
+  JCasC:
+    enabled: true
+    defaultConfig: true
+
+
+  # 2. Enable the sidecar containers to manage configuration
+  sidecars:
+    configAutoReload:
+      enabled: true
+      # Tell the sidecar to ignore the strict SSL certificate check
+      env:
+        - name: SKIP_TLS_VERIFY
+          value: "true"
+      
+  # Changed to ClusterIP
+  serviceType: ClusterIP 
+
+  persistence:
+    enabled: true
+    size: "5Gi"
+
+  # Ingress MUST be under the controller block for Jenkins
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    #ingressClassName: traefik
+    annotations:
+      # nginx implementation
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+
+      #https
+      # traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      # traefik.ingress.kubernetes.io/router.tls: "true"
+
+
+      #for simple http just keep this
+      #traefik.ingress.kubernetes.io/router.entrypoints: web
+
+    # tls:
+    #   - hosts:
+    #       - jenkins.localhost
+
+#  Enable RBAC so the sidecar has K8s permissions to read the config
+rbac:
+  create: true
+  readSecrets: true
