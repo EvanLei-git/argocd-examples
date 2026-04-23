@@ -32,15 +32,15 @@ pipeline {
         
         stage('Promote to CD (Merge)') {
             steps {
-                echo 'CI passed! Merging dev-build into kustomize branch for ArgoCD to deploy...'
+                echo 'CI passed! Merging kustomize into dev-build branch for ArgoCD to deploy...'
                 withCredentials([usernamePassword(credentialsId: "${GIT_CREDS_ID}", usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                     sh '''
                         # Configure git
                         git config user.name "Jenkins CI"
                         git config user.email "ci@jenkins.local"
                         
-                        # Push the current tested commit directly to the kustomize branch
-                        git push https://${GIT_USER}:${GIT_PASS}@github.com/EvanLei-git/argocd-examples.git HEAD:kustomize
+                        # Push the current tested commit directly to the dev-build branch
+                        git push https://${GIT_USER}:${GIT_PASS}@github.com/EvanLei-git/argocd-examples.git HEAD:dev-build
                     '''
                 }
             }
