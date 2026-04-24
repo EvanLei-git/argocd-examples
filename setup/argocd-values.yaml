@@ -15,6 +15,9 @@ configs:
     argocdServerAdminPasswordMtime: "2026-04-19T00:00:00Z"
 
 redis-ha:
+  enabled: false
+
+redis:
   enabled: true
 
 controller:
@@ -27,7 +30,7 @@ server:
   
   autoscaling:
     enabled: true
-    minReplicas: 2
+    minReplicas: 1
     
   ingress:
     enabled: true
@@ -57,10 +60,10 @@ server:
 repoServer:
   autoscaling:
     enabled: true
-    minReplicas: 2
+    minReplicas: 1
 
 applicationSet:
-  replicas: 2
+  replicas: 1
 
 
   
