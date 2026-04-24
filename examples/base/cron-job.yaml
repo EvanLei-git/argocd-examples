@@ -1,21 +1,20 @@
 apiVersion: batch/v1
 kind: CronJob
-
-
 metadata:
   labels:
     chart: cronjobs-0.1.0
   name: health-check-5-minutes
+  namespace: dev-env
 spec:
-  schedule: "* * * * *"
-  concurrencyPolicy: Forbid
+  schedule: "* * * * *"  # Runs every 5 minutes exactly
+  concurrencyPolicy: Forbid 
   jobTemplate:
     spec:
       template:
         spec:
           containers:
           - name: health-check-5-minutes
-            image: busybox:1.28
+            image: curlimages/curl:latest
             imagePullPolicy: IfNotPresent
             env:
             - name: NAMESPACE
@@ -23,15 +22,22 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: SERVICE_NAME
-              value: nginx-nodeport
+              value: dev-nginx-nodeport
             command:
             - /bin/sh
             - -c
             - |
-
-              echo -n "Checking ${SERVICE_NAME} in namespace ${NAMESPACE}: "
-              wget -T 5 -q --spider http://${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local && echo "OK" || echo "FAILED"
-
-
+              echo "Starting health check for ${SERVICE_NAME} in namespace ${NAMESPACE}..."
+              URL="http://${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local"
+              
+              # -s: silent, -o /dev/null: hide output, -w: print only the HTTP status code, -m 5: max 5 seconds
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 5 $URL)
+              
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "OK: Service is UP and returned HTTP 200."
+                exit 0
+              else
+                echo "FAILED: Service returned HTTP $HTTP_CODE."
+                exit 1
+              fi
           restartPolicy: OnFailure
-        
