@@ -6,38 +6,41 @@ metadata:
   name: health-check-5-minutes
   namespace: dev-env
 spec:
-  schedule: "* * * * *"  # Runs every 5 minutes exactly
-  concurrencyPolicy: Forbid 
+  #schedule: "*/5 * * * *"
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
   jobTemplate:
     spec:
+      backoffLimit: 0 
       template:
         spec:
+          serviceAccountName: deployment-checker
           containers:
           - name: health-check-5-minutes
-            image: curlimages/curl:latest
+            image: bitnami/kubectl:latest
             imagePullPolicy: IfNotPresent
             env:
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-            - name: SERVICE_NAME
-              value: dev-nginx-nodeport
+            - name: DEPLOYMENT_NAME
+              value: dev-nginx-deployment
             command:
             - /bin/sh
             - -c
             - |
-              echo "Starting health check for ${SERVICE_NAME} in namespace ${NAMESPACE}..."
-              URL="http://${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local"
+              echo "Asking Kubernetes API for the status of ${DEPLOYMENT_NAME}..."
               
-              # -s: silent, -o /dev/null: hide output, -w: print only the HTTP status code, -m 5: max 5 seconds
-              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 5 $URL)
+              # How many replicas are fully available and ready?
+              AVAILABLE_REPLICAS=$(kubectl get deployment ${DEPLOYMENT_NAME} -n ${NAMESPACE} -o jsonpath='{.status.availableReplicas}')
               
-              if [ "$HTTP_CODE" = "200" ]; then
-                echo "OK: Service is UP and returned HTTP 200."
-                exit 0
-              else
-                echo "FAILED: Service returned HTTP $HTTP_CODE."
+              # If the result is empty or 0, the app is down.
+              if [ -z "$AVAILABLE_REPLICAS" ] || [ "$AVAILABLE_REPLICAS" = "0" ]; then
+                echo "FAILED: Deployment has 0 available replicas."
                 exit 1
+              else
+                echo "OK: Deployment is healthy and running with ${AVAILABLE_REPLICAS} available replica(s)."
+                exit 0
               fi
-          restartPolicy: OnFailure
+          restartPolicy: Never
