@@ -71,11 +71,3 @@ images:
 - name: nginx
   newName: nginx
   newTag: 1.29.0
-
-
-
-commonLabels:
-  build-version: testbuild-v0.0.6
-labels:
-- pairs:
-    build-version: testbuild-v0.0.7
