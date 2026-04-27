@@ -73,4 +73,4 @@ images:
   newTag: 1.29.0
 labels:
 - pairs:
-    build-version: testbuild-v0.0.9
+    build-version: testbuild-v0.0.10
