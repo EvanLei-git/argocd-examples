@@ -12,18 +12,21 @@ namePrefix: dev-
 # which breaks the postgres Application object by forcing it out of the argocd namespace.
 # Instead, we manually patch the NGINX components to go to dev-env.
 
-patches:
 # Patch NGINX Deployment and Service to go to dev-env
+
+# Patch Postgres Application destination to dev-env, but keep the Application itself in argocd
+# We also control the PostgreSQL Helm chart version right here in the overlay!
+#The JSON Patch
+
+# Merge Patch 
+patches:
 - patch: |-
     - op: replace
       path: /metadata/namespace
       value: dev-env
   target:
     kind: Deployment|Service
-    name: "nginx-.*"
-
-# Patch Postgres Application destination to dev-env, but keep the Application itself in argocd
-# We also control the PostgreSQL Helm chart version right here in the overlay!
+    name: nginx-.*
 - patch: |-
     - op: replace
       path: /spec/destination/namespace
@@ -37,7 +40,6 @@ patches:
   target:
     kind: Application
     name: postgres-bitnami
-#The JSON Patch
 - patch: |-
     - op: add
       path: /metadata/namespace
@@ -45,8 +47,6 @@ patches:
   target:
     kind: CronJob
     name: health-check-5-minutes
-
-# Merge Patch 
 - patch: |-
     apiVersion: batch/v1
     kind: CronJob
@@ -75,4 +75,4 @@ images:
 
 
 commonLabels:
-  build-version: testbuild-v0.0.1
+  build-version: testbuild-v0.0.6
