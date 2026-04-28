@@ -12,7 +12,12 @@ spec:
     metadata:
       labels:
         app: nginx
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "myapp-role"
+        vault.hashicorp.com/agent-inject-secret-dbcreds.txt: "secret/data/myapp/database"
     spec:
+      serviceAccountName: myapp-sa
       containers:
       - name: nginx-container
         image: nginx:bookworm-otel

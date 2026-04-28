@@ -28,3 +28,9 @@ roleRef:
   kind: Role
   name: deployment-checker-role
   apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: myapp-sa
+  namespace: dev-env

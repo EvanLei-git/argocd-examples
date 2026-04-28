@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-app
+  namespace: default
+spec:
+  template:
+    metadata:
+      annotations:
+        # 1. Enable the sidecar injection
+        vault.hashicorp.com/agent-inject: "true"
+        
+        # 2. Tell the sidecar which Vault role to log in with
+        vault.hashicorp.com/role: "myapp-role"
+        
+        # 3. Request the specific secret we created in Step 1
+        vault.hashicorp.com/agent-inject-secret-dbcreds.txt: "secret/data/myapp/database"
+    spec:
+      serviceAccountName: myapp-sa # Must match the ServiceAccount tied to the role
+      containers:
+        - name: postgres
+          image: postgres:latest
+          # ... rest of your container config ...
