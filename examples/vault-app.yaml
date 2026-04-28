@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault
+  namespace: argocd 
+spec:
+  project: default
+  
+  # Note that this is "sources" (plural) instead of "source"
+  sources:
+    # ---------------------------------------------------------
+    # SOURCE 1: The Official HashiCorp Helm Chart
+    # ---------------------------------------------------------
+    - repoURL: 'https://helm.releases.hashicorp.com'
+      chart: vault
+      targetRevision: 0.32.0 
+      helm:
+        valueFiles:
+  
+          - $values/examples/overlays/dev/vault-values.yaml
+          
+    # ---------------------------------------------------------
+    # SOURCE 2: Your GitOps Repository
+    # ---------------------------------------------------------
+    - repoURL: 'https://github.com/EvanLei-git/argocd-kustomize-examples.git'
+      targetRevision: HEAD # You can change this to 'main' if you prefer
+      ref: values # This 'ref' creates the '$values' variable used in Source 1
+      
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: vault 
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      
+  # ---------------------------------------------------------
+  # IGNORE DIFFERENCES: The Webhook Conflict Fix
+  # ---------------------------------------------------------
+  ignoreDifferences:
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+      name: vault-agent-injector-cfg
+      jqPathExpressions:
+        - '.webhooks[]?.clientConfig.caBundle'
