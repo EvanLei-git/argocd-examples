@@ -3,7 +3,6 @@ kind: Kustomization
 
 
 resources:
-  - sa.yaml
   - cron-job.yaml
   - nginx/nginx-deployment.yaml
   - nginx/nginx-svc.yaml
