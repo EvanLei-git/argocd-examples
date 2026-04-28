@@ -2,47 +2,33 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: vault
-  namespace: argocd 
+  namespace: argocd
 spec:
   project: default
-  
-  # Note that this is "sources" (plural) instead of "source"
+  # Use 'sources' (plural) to pull from two places at once
   sources:
-    # ---------------------------------------------------------
-    # SOURCE 1: The Official HashiCorp Helm Chart
-    # ---------------------------------------------------------
-    - repoURL: 'https://helm.releases.hashicorp.com'
-      chart: vault
-      targetRevision: 0.32.0 
+    # Source 1: The official public HashiCorp Helm Chart
+    - chart: vault
+      repoURL: https://helm.releases.hashicorp.com
+      targetRevision: 0.32.0 # Replace with your desired Vault Helm chart version
       helm:
         valueFiles:
-  
-          - $values/examples/overlays/dev/vault-values.yaml
-          
-    # ---------------------------------------------------------
-    # SOURCE 2: Your GitOps Repository
-    # ---------------------------------------------------------
-    - repoURL: 'https://github.com/EvanLei-git/argocd-kustomize-examples.git'
-      targetRevision: HEAD # You can change this to 'main' if you prefer
-      ref: values # This 'ref' creates the '$values' variable used in Source 1
-      
+          # $values tells ArgoCD to look in the other Git repo referenced below!
+          - $values/hashicorp/vault-values.yaml
+
+    # Source 2: Your PRIVATE Git repository holding the values file
+    - repoURL: https://github.com/EvanLei-git/git-ops-setup.git
+      targetRevision: main
+      # The 'ref: values' acts as a variable name that the Helm chart source above uses
+      ref: values
+
   destination:
-    server: 'https://kubernetes.default.svc'
-    namespace: vault 
-    
+    server: https://kubernetes.default.svc
+    namespace: vault # Vault usually lives in its own namespace
+  
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      
-  # ---------------------------------------------------------
-  # IGNORE DIFFERENCES: The Webhook Conflict Fix
-  # ---------------------------------------------------------
-  ignoreDifferences:
-    - group: admissionregistration.k8s.io
-      kind: MutatingWebhookConfiguration
-      name: vault-agent-injector-cfg
-      jqPathExpressions:
-        - '.webhooks[]?.clientConfig.caBundle'
