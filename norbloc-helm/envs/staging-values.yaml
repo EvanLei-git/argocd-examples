@@ -4,7 +4,7 @@ ingress:
 
 mariadb:
   persistence:
-    size: 1Gi
+    size: 2Gi
   auth:
     # Staging-specific passwords (base64). Rotate before going live.
     rootPassword: "c3RhZ2luZy1yb290"
@@ -14,3 +14,10 @@ wordpress:
   debug: "1"
   persistence:
     size: 2Gi
+  image:
+    tag: "6.9.4-apache"
+
+
+mariadb:
+  image:
+    tag: "11.8"

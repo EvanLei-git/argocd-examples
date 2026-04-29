@@ -1,10 +1,10 @@
 # Production overrides — larger resources, real hostname
 ingress:
-  host: "norbloc.com"
+  host: "production.localhost"
 
 mariadb:
   persistence:
-    size: 10Gi
+    size: 2Gi
   auth:
     # TODO: Replace with real production credentials (or use Vault)
     rootPassword: "cGFzc3dvcmQ="
@@ -13,4 +13,11 @@ mariadb:
 wordpress:
   debug: "0"
   persistence:
-    size: 10Gi
+    size: 2Gi
+  image:
+    tag: "6.9.4-apache"
+
+
+mariadb:
+  image:
+    tag: "11.8"
