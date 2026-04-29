@@ -4,7 +4,6 @@ metadata:
   labels:
     chart: cronjobs-0.1.0
   name: health-check-5-minutes
-  namespace: dev-env
 spec:
   #schedule: "*/5 * * * *"
   schedule: "* * * * *"
@@ -25,7 +24,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: DEPLOYMENT_NAME
-              value: dev-nginx-deployment
+              value: nginx-deployment
             command:
             - /bin/sh
             - -c

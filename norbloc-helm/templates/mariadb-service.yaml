@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "norbloc-helm.fullname" . }}-mariadb
+  labels:
+    app.kubernetes.io/component: mariadb
+    {{- include "norbloc-helm.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.mariadb.service.type }}
+  selector:
+    app.kubernetes.io/component: mariadb
+    {{- include "norbloc-helm.selectorLabels" . | nindent 4 }}
+  ports:
+    - protocol: TCP
+      port: {{ .Values.mariadb.service.port }}
+      targetPort: 3306

@@ -1,0 +1,45 @@
+# Default values for norbloc-helm
+
+# MariaDB Configuration
+mariadb:
+  image:
+    repository: mariadb
+    tag: "10.6.25"
+  service:
+    type: ClusterIP
+    port: 3306
+  persistence:
+    enabled: true
+    # Leave empty to use cluster default. Set to "-" to disable dynamic provisioning.
+    storageClass: ""
+    size: 1Gi
+    accessMode: ReadWriteOnce
+  auth:
+    # Base64-encoded password. Override per environment in envs/*.yaml
+    rootPassword: "cGFzc3dvcmQ="
+    # Database user for WordPress to connect with
+    user: "wordpress"
+    userPassword: "d29yZHByZXNz"
+  database: "wordpress"
+
+# WordPress Configuration
+wordpress:
+  image:
+    repository: wordpress
+    tag: "6.9-php8.2-apache"
+  service:
+    type: ClusterIP
+    port: 80
+  persistence:
+    enabled: true
+    storageClass: ""
+    size: 2Gi
+    accessMode: ReadWriteOnce
+  tablePrefix: "nrb_"
+  debug: "0"
+
+# Ingress Configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  host: "norbloc.localhost"

@@ -1,15 +1,15 @@
+# RBAC for the CronJob health checker.
+# Grants read-only access to Deployments so the CronJob can check replica status.
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: deployment-checker
-  namespace: dev-env
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: deployment-checker-role
-  namespace: dev-env
 rules:
 - apiGroups: ["apps"]
   resources: ["deployments"]
@@ -19,18 +19,10 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: deployment-checker-binding
-  namespace: dev-env
 subjects:
 - kind: ServiceAccount
   name: deployment-checker
-  namespace: dev-env
 roleRef:
   kind: Role
   name: deployment-checker-role
   apiGroup: rbac.authorization.k8s.io
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: myapp-sa
-  namespace: dev-env

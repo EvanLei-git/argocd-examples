@@ -1,0 +1,7 @@
+# ServiceAccount for Vault Agent injection.
+# The nginx deployment uses this SA so Vault's mutating webhook
+# can inject secrets as a sidecar container.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: myapp-sa

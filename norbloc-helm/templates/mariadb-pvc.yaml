@@ -1,0 +1,21 @@
+{{- if .Values.mariadb.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "norbloc-helm.fullname" . }}-mariadb-pvc
+  labels:
+    {{- include "norbloc-helm.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.mariadb.persistence.accessMode }}
+  {{- if .Values.mariadb.persistence.storageClass }}
+  {{- if (eq "-" .Values.mariadb.persistence.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: "{{ .Values.mariadb.persistence.storageClass }}"
+  {{- end }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.mariadb.persistence.size }}
+{{- end }}

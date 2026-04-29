@@ -1,0 +1,21 @@
+{{- if .Values.wordpress.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "norbloc-helm.fullname" . }}-wordpress-pvc
+  labels:
+    {{- include "norbloc-helm.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.wordpress.persistence.accessMode }}
+  {{- if .Values.wordpress.persistence.storageClass }}
+  {{- if (eq "-" .Values.wordpress.persistence.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: "{{ .Values.wordpress.persistence.storageClass }}"
+  {{- end }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.wordpress.persistence.size }}
+{{- end }}

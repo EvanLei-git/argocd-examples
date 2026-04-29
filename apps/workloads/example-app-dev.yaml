@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: 'https://github.com/EvanLei-git/argocd-kustomize-examples.git'
     targetRevision: kustomize
-    path: examples/overlays/dev
+    path: example-app/overlays/dev
   destination:
     server: 'https://kubernetes.default.svc'
     # The Root app deploys into the ArgoCD namespace so ArgoCD can read the child postgres.yaml
