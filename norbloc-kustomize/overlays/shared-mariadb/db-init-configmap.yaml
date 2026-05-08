@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariadb-init-script
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS `wp_staging`;
+    CREATE DATABASE IF NOT EXISTS `wp_production`;
+    GRANT ALL PRIVILEGES ON `wp_staging`.* TO 'root'@'%';
+    GRANT ALL PRIVILEGES ON `wp_production`.* TO 'root'@'%';
+    FLUSH PRIVILEGES;

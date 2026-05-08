@@ -1,0 +1,37 @@
+# ApplicationSet: Auto-generates one ArgoCD Application per environment.
+# To add a new environment, just add an entry to the elements list
+# and create the matching overlay in example-app/overlays/<env>/
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: example-app
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - env: dev
+        namespace: dev-env
+        branch: kustomize
+      # Uncomment when overlays/staging exists:
+      # - env: staging
+      #   namespace: staging-env
+      #   branch: kustomize
+  template:
+    metadata:
+      name: 'example-app-{{env}}'
+    spec:
+      project: default
+      source:
+        repoURL: 'https://github.com/EvanLei-git/argocd-kustomize-examples.git'
+        targetRevision: '{{branch}}'
+        path: 'example-app/overlays/{{env}}'
+      destination:
+        server: 'https://kubernetes.default.svc'
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

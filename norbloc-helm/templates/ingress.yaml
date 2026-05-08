@@ -1,21 +1,29 @@
 {{- if .Values.ingress.enabled -}}
+{{- $fullName := include "norbloc-helm.fullname" . -}}
+{{- $ns := .Values.namespace | default .Release.Namespace -}}
+{{- range $envName, $envConfig := .Values.environments }}
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "norbloc-helm.fullname" . }}
+  name: {{ $fullName }}-{{ $envName }}
+  namespace: {{ $ns }}
   labels:
-    {{- include "norbloc-helm.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/environment: {{ $envName }}
+    {{- include "norbloc-helm.labels" $ | nindent 4 }}
 spec:
-  ingressClassName: {{ .Values.ingress.className }}
+  ingressClassName: {{ $.Values.ingress.className }}
   rules:
-    - host: {{ .Values.ingress.host | quote }}
+    - host: {{ $envConfig.host | quote }}
       http:
         paths:
           - path: /
             pathType: ImplementationSpecific
             backend:
               service:
-                name: {{ include "norbloc-helm.fullname" . }}-wordpress
+                name: {{ $fullName }}-{{ $envName }}-wordpress
                 port:
-                  number: {{ .Values.wordpress.service.port }}
+                  number: {{ $.Values.wordpress.service.port }}
+{{- end }}
 {{- end }}

@@ -1,11 +1,15 @@
+{{- $fullName := include "norbloc-helm.fullname" . -}}
+{{- $ns := .Values.namespace | default .Release.Namespace -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "norbloc-helm.fullname" . }}-mariadb
+  name: {{ $fullName }}-mariadb
+  namespace: {{ $ns }}
   labels:
     app.kubernetes.io/component: mariadb
     {{- include "norbloc-helm.labels" . | nindent 4 }}
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/component: mariadb
@@ -20,36 +24,60 @@ spec:
       - name: mariadb
         image: "{{ .Values.mariadb.image.repository }}:{{ .Values.mariadb.image.tag }}"
         ports:
-        - containerPort: 3306
+        - name: mysql
+          containerPort: 3306
         env:
-        - name: MYSQL_ROOT_PASSWORD
+        - name: MARIADB_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ include "norbloc-helm.fullname" . }}-mariadb-credentials
+              name: {{ $fullName }}-mariadb-credentials
               key: MYSQL_ROOT_PASSWORD
-        - name: MYSQL_USER
+        - name: MARIADB_USER
           valueFrom:
             secretKeyRef:
-              name: {{ include "norbloc-helm.fullname" . }}-mariadb-credentials
+              name: {{ $fullName }}-mariadb-credentials
               key: MYSQL_USER
-        - name: MYSQL_PASSWORD
+        - name: MARIADB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ include "norbloc-helm.fullname" . }}-mariadb-credentials
+              name: {{ $fullName }}-mariadb-credentials
               key: MYSQL_PASSWORD
-        - name: MYSQL_DATABASE
-          valueFrom:
-            configMapKeyRef:
-              name: {{ include "norbloc-helm.fullname" . }}-configmap
-              key: MYSQL_DATABASE
+        # MARIADB_DATABASE is intentionally omitted — all DBs are created
+        # by the init script in /docker-entrypoint-initdb.d/
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "mariadb-admin ping -h 127.0.0.1 -u root -p$MARIADB_ROOT_PASSWORD"
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "mariadb-admin ping -h 127.0.0.1 -u root -p$MARIADB_ROOT_PASSWORD"
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
         volumeMounts:
         - name: db-storage
           mountPath: /var/lib/mysql
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d
+          readOnly: true
       volumes:
       - name: db-storage
         {{- if .Values.mariadb.persistence.enabled }}
         persistentVolumeClaim:
-          claimName: {{ include "norbloc-helm.fullname" . }}-mariadb-pvc
+          claimName: {{ $fullName }}-mariadb-pvc
         {{- else }}
         emptyDir: {}
         {{- end }}
+      - name: init-scripts
+        configMap:
+          name: {{ $fullName }}-mariadb-init

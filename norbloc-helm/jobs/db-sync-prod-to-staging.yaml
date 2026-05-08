@@ -1,0 +1,105 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-sync-prod-to-staging
+  namespace: wordpress
+  labels:
+    app.kubernetes.io/component: db-sync-job
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: db-sync-job
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+      - name: wait-for-mariadb
+        image: busybox:1.37
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z norbloc-norbloc-helm-mariadb 3306; do
+            sleep 3
+          done
+      containers:
+      - name: db-sync
+        image: mariadb:11.8
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -euo pipefail
+
+          DB_HOST="norbloc-norbloc-helm-mariadb"
+          SRC_DB="wp-prod-db"
+          DEST_DB="wp-staging-db"
+          DUMP="/tmp/dump.sql"
+          DUMP_FIXED="/tmp/dump_fixed.sql"
+
+          # --- Phase 1: Export ---
+          echo "[1/4] Dumping $SRC_DB..."
+          mariadb-dump \
+            -h "$DB_HOST" \
+            -u root -p"$MYSQL_ROOT_PASSWORD" \
+            --single-transaction \
+            --add-drop-table \
+            --insert-ignore \
+            "$SRC_DB" > "$DUMP"
+
+          # --- Phase 2: Sanitize dump ---
+          # Strip the MariaDB sandbox comment (/*M!999999-...) that causes
+          # "Unknown command '-'" errors on import.
+          # Also convert any remaining plain INSERT INTO → INSERT IGNORE INTO
+          # to handle ERROR 1062 duplicate primary key collisions (e.g. legacy
+          # plugin log bloat) without aborting the full import.
+          echo "[2/4] Sanitizing dump..."
+          sed \
+            -e '/^\/\*M!999999/d' \
+            -e 's/^INSERT INTO /INSERT IGNORE INTO /g' \
+            "$DUMP" > "$DUMP_FIXED"
+
+          if [ ! -s "$DUMP_FIXED" ]; then
+            echo "ERROR: sanitized dump is empty — aborting."
+            exit 1
+          fi
+
+          # --- Phase 3: Reset destination DB ---
+          # Drop and recreate for a clean slate — avoids out-of-order
+          # alignment errors from partial previous imports.
+          echo "[3/4] Resetting $DEST_DB..."
+          mariadb -h "$DB_HOST" -u root -p"$MYSQL_ROOT_PASSWORD" -e \
+            "DROP DATABASE IF EXISTS \`$DEST_DB\`;
+             CREATE DATABASE \`$DEST_DB\`;
+             GRANT ALL PRIVILEGES ON \`$DEST_DB\`.* TO '$MYSQL_USER'@'%';
+             FLUSH PRIVILEGES;"
+
+          # --- Phase 4: Import ---
+          # -f (force) continues past non-fatal errors so the full document
+          # is always processed even if isolated collision rows remain.
+          echo "[4/4] Importing into $DEST_DB..."
+          mariadb \
+            -h "$DB_HOST" \
+            -u root -p"$MYSQL_ROOT_PASSWORD" \
+            -f \
+            "$DEST_DB" < "$DUMP_FIXED"
+
+          echo "Migration complete: $SRC_DB -> $DEST_DB"
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: norbloc-norbloc-helm-mariadb-credentials
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: norbloc-norbloc-helm-mariadb-credentials
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: norbloc-norbloc-helm-mariadb-credentials
+              key: MYSQL_PASSWORD

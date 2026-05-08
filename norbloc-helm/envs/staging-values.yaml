@@ -1,23 +1,23 @@
-# Staging overrides — smaller resources, local hostname
-ingress:
-  host: "staging.localhost"
-
-mariadb:
-  persistence:
-    size: 2Gi
-  auth:
-    # Staging-specific passwords (base64). Rotate before going live.
-    rootPassword: "c3RhZ2luZy1yb290"
-    userPassword: "c3RhZ2luZy11c2Vy"
-
-wordpress:
-  debug: "1"
-  persistence:
-    size: 2Gi
-  image:
-    tag: "6.9.4-apache"
-
+# Staging environment overrides
+# Applied on top of production-values.yaml to tune staging-specific resources.
+# Run from norbloc-helm/: helm upgrade --install norbloc . -f envs/production-values.yaml -f envs/staging-values.yaml --namespace wordpress
+#
+# Both environments (wp-prod + wp-staging) are defined in values.yaml so that
+# the single shared MariaDB pod creates both databases on init.
 
 mariadb:
   image:
     tag: "11.8"
+  persistence:
+    size: 2Gi
+  auth:
+    # Staging-specific credentials — rotate before going live.
+    # Store the real values in Vault or a sealed-secret.
+    rootPassword: ""
+    userPassword: ""
+wordpress:
+  image:
+    tag: "6.9.4-apache"
+  debug: "1"
+  persistence:
+    size: 2Gi

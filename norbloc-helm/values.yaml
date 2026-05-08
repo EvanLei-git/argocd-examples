@@ -1,6 +1,60 @@
-# Default values for norbloc-helm
+# =============================================================================
+# norbloc-helm — Default Values
+# =============================================================================
+# All environments are deployed from a single Helm release.
+# To add a new WordPress instance + database, add an entry under `environments:`
+# and re-run: helm upgrade --install wordpress ./norbloc-helm
+# =============================================================================
 
-# MariaDB Configuration
+# Namespace for all resources. The chart will create this namespace if it does
+# not already exist (or if it differs from the release namespace).
+namespace: "wordpress"
+
+# ---------------------------------------------------------------------------
+# Environments
+# ---------------------------------------------------------------------------
+# Each key becomes the environment name used in resource names, labels, and
+# Ingress hostnames. The `database` field must be unique per environment.
+# To spin up a new instance: add an entry here with a unique name + database.
+#
+# Example — adding a QA environment:
+#   wp-qa:
+#     database: "wp-qa-db"
+#     host: "qa.norbloc.localhost"
+# ---------------------------------------------------------------------------
+# environments:
+#   wp-staging:
+#     database: "wp-staging-db"
+#     host: "staging.norbloc.localhost"
+#   wp-prod:
+#     database: "wp-prod-db"
+#     host: "prod.norbloc.localhost"
+# Both environments are defined here so that ONE release creates ONE shared
+# MariaDB pod with BOTH logical databases (wp-prod-db and wp-staging-db).
+# The init configmap loops over this map and runs CREATE DATABASE for each.
+environments:
+  wp-staging:
+    database: "wp-staging-db"
+    host: "staging.norbloc.localhost"
+  wp-prod:
+    database: "wp-prod-db"
+    host: "prod.norbloc.localhost"
+
+
+# ---------------------------------------------------------------------------
+# Database Sync Job
+# ---------------------------------------------------------------------------
+# Exports `sourceEnv.database` and imports it into `destEnv.database`.
+# Runs as a Helm hook on: post-install, post-upgrade.
+# Set enabled: false to skip the sync (e.g. on first install before prod has data).
+syncJob:
+  enabled: true
+  sourceEnv: "wp-prod"
+  destEnv: "wp-staging"
+
+# ---------------------------------------------------------------------------
+# MariaDB — Single shared instance, multiple databases
+# ---------------------------------------------------------------------------
 mariadb:
   image:
     repository: mariadb
@@ -10,19 +64,21 @@ mariadb:
     port: 3306
   persistence:
     enabled: true
-    # Leave empty to use cluster default. Set to "-" to disable dynamic provisioning.
+    # Leave storageClass empty to use the cluster default.
+    # Use "-" to force an empty storageClassName (disables dynamic provisioning).
     storageClass: ""
-    size: 2Gi
+    size: 5Gi
     accessMode: ReadWriteOnce
   auth:
-    # Base64-encoded password. Override per environment in envs/*.yaml
-    rootPassword: "FOR-THE-KEY"
-    # Database user for WordPress to connect with
+    # Plain-text values — they are base64-encoded by the secret template.
+    # Override these in envs/production-values.yaml or via --set.
+    rootPassword: ""
     user: "wordpress"
-    userPassword: "FOR-THE-KEY"
-  database: "wordpress"
+    userPassword: ""
 
-# WordPress Configuration
+# ---------------------------------------------------------------------------
+# WordPress — Shared image config, one Deployment per environment
+# ---------------------------------------------------------------------------
 wordpress:
   image:
     repository: wordpress
@@ -36,10 +92,9 @@ wordpress:
     size: 2Gi
     accessMode: ReadWriteOnce
   tablePrefix: "nrb_"
+  # Set to "1" to enable WP_DEBUG (useful in staging)
   debug: "0"
 
-# Ingress Configuration
 ingress:
   enabled: true
   className: "nginx"
-  host: "norbloc.localhost"

@@ -1,0 +1,9 @@
+{{- $ns := .Values.namespace | default .Release.Namespace -}}
+{{- if ne $ns .Release.Namespace }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $ns }}
+  labels:
+    {{- include "norbloc-helm.labels" . | nindent 4 }}
+{{- end }}

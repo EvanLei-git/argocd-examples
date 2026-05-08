@@ -1,21 +1,29 @@
+{{- $fullName := include "norbloc-helm.fullname" . -}}
+{{- $ns := .Values.namespace | default .Release.Namespace -}}
 {{- if .Values.wordpress.persistence.enabled }}
+{{- range $envName, $envConfig := .Values.environments }}
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "norbloc-helm.fullname" . }}-wordpress-pvc
+  name: {{ $fullName }}-{{ $envName }}-wordpress-pvc
+  namespace: {{ $ns }}
   labels:
-    {{- include "norbloc-helm.labels" . | nindent 4 }}
+    app.kubernetes.io/component: wordpress
+    app.kubernetes.io/environment: {{ $envName }}
+    {{- include "norbloc-helm.labels" $ | nindent 4 }}
 spec:
   accessModes:
-    - {{ .Values.wordpress.persistence.accessMode }}
-  {{- if .Values.wordpress.persistence.storageClass }}
-  {{- if (eq "-" .Values.wordpress.persistence.storageClass) }}
+    - {{ $.Values.wordpress.persistence.accessMode }}
+  {{- if $.Values.wordpress.persistence.storageClass }}
+  {{- if (eq "-" $.Values.wordpress.persistence.storageClass) }}
   storageClassName: ""
   {{- else }}
-  storageClassName: "{{ .Values.wordpress.persistence.storageClass }}"
+  storageClassName: "{{ $.Values.wordpress.persistence.storageClass }}"
   {{- end }}
   {{- end }}
   resources:
     requests:
-      storage: {{ .Values.wordpress.persistence.size }}
+      storage: {{ $.Values.wordpress.persistence.size }}
+{{- end }}
 {{- end }}

@@ -1,16 +1,24 @@
+{{- $fullName := include "norbloc-helm.fullname" . -}}
+{{- $ns := .Values.namespace | default .Release.Namespace -}}
+{{- range $envName, $envConfig := .Values.environments }}
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "norbloc-helm.fullname" . }}-wordpress
+  name: {{ $fullName }}-{{ $envName }}-wordpress
+  namespace: {{ $ns }}
   labels:
     app.kubernetes.io/component: wordpress
-    {{- include "norbloc-helm.labels" . | nindent 4 }}
+    app.kubernetes.io/environment: {{ $envName }}
+    {{- include "norbloc-helm.labels" $ | nindent 4 }}
 spec:
-  type: {{ .Values.wordpress.service.type }}
+  type: {{ $.Values.wordpress.service.type }}
   selector:
     app.kubernetes.io/component: wordpress
-    {{- include "norbloc-helm.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/environment: {{ $envName }}
+    {{- include "norbloc-helm.selectorLabels" $ | nindent 4 }}
   ports:
-    - port: {{ .Values.wordpress.service.port }}
+    - port: {{ $.Values.wordpress.service.port }}
       targetPort: 80
       protocol: TCP
+{{- end }}

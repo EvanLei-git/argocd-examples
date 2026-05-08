@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb-deployment
+spec:
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+      - name: mariadb
+        image: mariadb:11.8
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-credentials
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-credentials
+              key: MYSQL_PASSWORD
+        volumeMounts:
+        - name: db-storage-wire
+          mountPath: /var/lib/mysql
+        - name: db-init-script
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+      - name: db-storage-wire
+        persistentVolumeClaim:
+          claimName: mariadb-pvc
+      - name: db-init-script
+        configMap:
+          name: mariadb-init-script

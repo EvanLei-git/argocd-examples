@@ -1,8 +1,11 @@
+{{- $fullName := include "norbloc-helm.fullname" . -}}
+{{- $ns := .Values.namespace | default .Release.Namespace -}}
 {{- if .Values.mariadb.persistence.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "norbloc-helm.fullname" . }}-mariadb-pvc
+  name: {{ $fullName }}-mariadb-pvc
+  namespace: {{ $ns }}
   labels:
     {{- include "norbloc-helm.labels" . | nindent 4 }}
 spec:

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress-deployment
+spec:
+  selector:
+    matchLabels:
+      app: wordpress
+  template:
+    metadata:
+      labels:
+        app: wordpress
+    spec:
+      containers:
+      - name: wordpress
+        image: wordpress:6.9.4-apache
+        ports:
+        - containerPort: 80
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: "mariadb-service"
+        - name: WORDPRESS_DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: wordpress-config
+              key: WORDPRESS_DB_NAME
+        - name: WORDPRESS_TABLE_PREFIX
+          value: "nrb_"
+        - name: WORDPRESS_DEBUG
+          value: "0"
+        - name: WORDPRESS_DB_USER
+          value: "root"
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-credentials
+              key: MYSQL_ROOT_PASSWORD
+        volumeMounts:
+        - name: wp-storage-wire
+          mountPath: /var/www/html/wp-content
+      volumes:
+      - name: wp-storage-wire
+        persistentVolumeClaim:
+          claimName: wordpress-pvc

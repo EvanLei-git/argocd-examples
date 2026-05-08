@@ -1,23 +1,28 @@
-# Production overrides — larger resources, real hostname
-ingress:
-  host: "production.localhost"
-
-mariadb:
-  persistence:
-    size: 2Gi
-  auth:
-    # TODO: Replace with real production credentials (or use Vault)
-    rootPassword: "cGFzc3dvcmQ="
-    userPassword: "cGFzc3dvcmQ="
-
-wordpress:
-  debug: "0"
-  persistence:
-    size: 2Gi
-  image:
-    tag: "6.9.4-apache"
-
+# Production environment overrides
+# Run from norbloc-helm/: helm upgrade --install norbloc . --namespace wordpress --create-namespace
+#
+# This file overrides resource sizes, image tags, and credentials for production.
+# Both environments (wp-prod + wp-staging) are defined in values.yaml so that
+# the single shared MariaDB pod creates both databases on init.
 
 mariadb:
   image:
     tag: "11.8"
+  persistence:
+    size: 10Gi
+  auth:
+    # Replace these with real production credentials!
+    rootPassword: ""
+    userPassword: ""
+
+wordpress:
+  image:
+    tag: "6.9.4-apache"
+  debug: "0"
+  persistence:
+    size: 5Gi
+
+# Disable the sync job on initial production installs — enable after
+# prod has data worth syncing to staging.
+syncJob:
+  enabled: false

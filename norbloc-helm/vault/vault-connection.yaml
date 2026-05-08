@@ -1,0 +1,9 @@
+# Points VSO at the in-cluster Vault server.
+# The address uses the Vault service DNS inside the "vault" namespace.
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultConnection
+metadata:
+  name: vault-connection
+  namespace: wordpress
+spec:
+  address: http://vault.vault.svc.cluster.local:8200

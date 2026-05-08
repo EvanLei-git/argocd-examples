@@ -1,0 +1,16 @@
+# Tells VSO how to authenticate to Vault using the Kubernetes auth method.
+# This replaces the "vault write auth/kubernetes/role/..." CLI command for
+# day-to-day management — the role still needs to be registered in Vault once
+# (see vault-maria-guide.md Step 6).
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: norbloc-mariadb-auth
+  namespace: wordpress
+spec:
+  vaultConnectionRef: vault-connection
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    role: norbloc-mariadb        # must match the role registered in Vault
+    serviceAccount: default

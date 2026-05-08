@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: wordpress
+namePrefix: staging-
+resources:
+  - ../../base/wordpress
+  - wordpress-config.yaml
+
+patches:
+  - target:
+      kind: Ingress
+      name: wordpress-ingress
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: "staging.localhost"
+  - target:
+      kind: PersistentVolumeClaim
+      name: wordpress-pvc
+    patch: |-
+      - op: replace
+        path: /spec/resources/requests/storage
+        value: "2Gi"

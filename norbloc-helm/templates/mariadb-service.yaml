@@ -1,7 +1,10 @@
+{{- $fullName := include "norbloc-helm.fullname" . -}}
+{{- $ns := .Values.namespace | default .Release.Namespace -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "norbloc-helm.fullname" . }}-mariadb
+  name: {{ $fullName }}-mariadb
+  namespace: {{ $ns }}
   labels:
     app.kubernetes.io/component: mariadb
     {{- include "norbloc-helm.labels" . | nindent 4 }}
