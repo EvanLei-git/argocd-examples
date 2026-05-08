@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: norbloc-workloads
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - overlay: shared-mariadb
+      - overlay: staging
+      - overlay: production
+  template:
+    metadata:
+      name: 'norbloc-{{overlay}}'
+    spec:
+      project: default
+      source:
+        repoURL: 'https://github.com/EvanLei-git/argocd-kustomize-examples.git'
+        targetRevision: kustomize
+        path: 'norbloc-kustomize/overlays/{{overlay}}'
+      destination:
+        server: 'https://kubernetes.default.svc'
+        namespace: wordpress
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
