@@ -1,0 +1,65 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sync-prod-to-staging
+  namespace: wordpress
+  labels:
+    app.kubernetes.io/component: db-sync-job
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: db-sync-job
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: db-sync
+        image: mariadb # Let Kustomize inject the tag!
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -euo pipefail
+          
+          DB_HOST="mariadb-service"
+          SRC_DB="wp_production"
+          DEST_DB="wp_staging"
+          DUMP="/tmp/dump.sql"
+
+          # --- Phase 1: Export (Now with --hex-blob) ---
+          echo "[1/3] Dumping $SRC_DB natively..."
+          mariadb-dump \
+            -h "$DB_HOST" \
+            -u root -p"$MYSQL_ROOT_PASSWORD" \
+            --single-transaction \
+            --add-drop-table \
+            --hex-blob \
+            --insert-ignore \
+            "$SRC_DB" > "$DUMP"
+
+          # --- Phase 2: Reset destination DB ---
+          echo "[2/3] Resetting $DEST_DB..."
+          mariadb -h "$DB_HOST" -u root -p"$MYSQL_ROOT_PASSWORD" -e \
+            "DROP DATABASE IF EXISTS \`$DEST_DB\`;
+             CREATE DATABASE \`$DEST_DB\`;
+             GRANT ALL PRIVILEGES ON \`$DEST_DB\`.* TO 'root'@'%';
+             FLUSH PRIVILEGES;"
+
+          # --- Phase 3: Import ---
+          echo "[3/3] Importing into $DEST_DB..."
+          mariadb \
+            -h "$DB_HOST" \
+            -u root -p"$MYSQL_ROOT_PASSWORD" \
+            "$DEST_DB" < "$DUMP"
+
+          # Optional but recommended: Flush Elementor CSS & Search/Replace URLs for staging here!
+          
+          echo "✅ Migration complete: $SRC_DB -> $DEST_DB"
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-credentials
+              key: MYSQL_ROOT_PASSWORD

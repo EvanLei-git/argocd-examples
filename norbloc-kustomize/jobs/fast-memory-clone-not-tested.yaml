@@ -1,0 +1,50 @@
+# The Simplified, Ultra-Fast Job
+# If you want to optimize your Job, you can replace your script with this piped version. It is much cleaner, uses zero disk space, and runs much faster:
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sync-prod-to-staging
+  namespace: wordpress
+  labels:
+    app.kubernetes.io/component: db-sync-job
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: db-sync
+        image: mariadb # Relying on Kustomize tag
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -euo pipefail
+          
+          DB_HOST="mariadb-service"
+          SRC_DB="wp_production"
+          DEST_DB="wp_staging"
+
+          # Step 1: Wipe the slate clean
+          echo "Resetting $DEST_DB..."
+          mariadb -h "$DB_HOST" -u root -p"$MYSQL_ROOT_PASSWORD" -e \
+            "DROP DATABASE IF EXISTS \`$DEST_DB\`;
+             CREATE DATABASE \`$DEST_DB\`;"
+
+          # Step 2: Direct Memory-to-Memory Clone
+          echo "Cloning $SRC_DB directly to $DEST_DB..."
+          mariadb-dump -h "$DB_HOST" -u root -p"$MYSQL_ROOT_PASSWORD" \
+            --single-transaction \
+            --add-drop-table \
+            --hex-blob \
+            "$SRC_DB" | mariadb -h "$DB_HOST" -u root -p"$MYSQL_ROOT_PASSWORD" "$DEST_DB"
+
+          echo "✅ Ultra-fast clone complete!"
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-credentials
+              key: MYSQL_ROOT_PASSWORD

@@ -8,12 +8,12 @@ resources:
 
 patches:
   - target:
-      kind: Ingress
-      name: wordpress-ingress
+      kind: Service
+      name: wordpress-service
     patch: |-
-      - op: replace
-        path: /spec/rules/0/host
-        value: "localhost"
+      - op: add
+        path: /spec/ports/0/nodePort
+        value: 30082
   - target:
       kind: PersistentVolumeClaim
       name: wordpress-pvc
