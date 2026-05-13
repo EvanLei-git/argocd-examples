@@ -6,3 +6,5 @@ resources:
   - db-init-configmap.yaml
   - vault-auth-config.yaml
   - vault-secret-sync.yaml
+  - mariadb-backup-pvc.yaml
+  - mariadb-backup-cronjob.yaml

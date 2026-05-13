@@ -1,0 +1,66 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mariadb-backup
+  namespace: wordpress
+  labels:
+    app.kubernetes.io/component: db-backup
+spec:
+  schedule: "0 2 * * *" # Runs every day at 2 AM
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/component: db-backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: backup
+            image: mariadb
+            command:
+            - /bin/bash
+            - -c
+            - |
+              set -euo pipefail
+              
+              TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+              BACKUP_DIR="/backups/mariadb_backup_$TIMESTAMP"
+              
+              mkdir -p "$BACKUP_DIR"
+              
+              echo "🚀 Backing up MariaDB Database natively..."
+              mariadb-dump \
+                -h mariadb-service \
+                -u root -p"$MYSQL_ROOT_PASSWORD" \
+                --single-transaction \
+                --add-drop-table \
+                --hex-blob \
+                --insert-ignore \
+                wp_production > "$BACKUP_DIR/database.sql"
+              
+              echo "🎉 Backup complete! Saved to $BACKUP_DIR"
+              
+              echo "🧹 Enforcing 3-day retention policy (keeping newest 3 backups)..."
+              BACKUP_COUNT=$(ls -1d /backups/mariadb_backup_* 2>/dev/null | wc -l || true)
+              if [ "$BACKUP_COUNT" -gt 3 ]; then
+                ls -1d /backups/mariadb_backup_* | head -n -3 | xargs rm -rf
+                echo "✅ Removed old backups. Kept the most recent 3."
+              else
+                echo "✅ Less than or equal to 3 backups found. No cleanup needed."
+              fi
+            env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-credentials
+                  key: MYSQL_ROOT_PASSWORD
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: mariadb-backup-pvc
